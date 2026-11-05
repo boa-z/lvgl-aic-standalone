@@ -198,7 +198,9 @@ lvgl_aic_result_t lvgl_aic_display_port_init(
     lv_display_set_flush_cb(disp, display_flush);
 
     port->display = disp;
-    port->back_index = 0;
+    port->back_index = port->info.current_index;
+    if (port->back_index < 0 || port->back_index >= port->info.buffer_count)
+        port->back_index = 0;
     *display = disp;
     return LVGL_AIC_OK;
 }

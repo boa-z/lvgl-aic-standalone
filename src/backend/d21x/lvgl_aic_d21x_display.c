@@ -55,6 +55,14 @@ static lvgl_aic_result_t d21x_init(lvgl_aic_display_info_t *out)
     out->buffer_count = (int32_t)ctx->disp.fb_count;
     if (out->buffer_count > 2)
         out->buffer_count = 2;
+    {
+        int active = 0;
+
+        aic_disp_get_stats(RT_NULL, RT_NULL, &active);
+        out->current_index = active;
+    }
+    if (out->current_index < 0 || out->current_index >= out->buffer_count)
+        out->current_index = 0;
     out->buffer[0] = ctx->disp.fb[0];
     out->buffer[1] = out->buffer_count > 1 ? ctx->disp.fb[1] : NULL;
     return LVGL_AIC_OK;

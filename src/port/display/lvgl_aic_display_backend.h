@@ -21,6 +21,7 @@ typedef struct
     int32_t bpp;
     int32_t stride;
     int32_t buffer_count;
+    int32_t current_index;
     void *buffer[2];
 } lvgl_aic_display_info_t;
 

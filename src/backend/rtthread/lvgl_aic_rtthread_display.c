@@ -58,6 +58,7 @@ static lvgl_aic_result_t rt_display_init(lvgl_aic_display_info_t *out)
     out->bpp = ctx->info.bits_per_pixel;
     out->stride = ctx->info.pitch;
     out->buffer_count = 1;
+    out->current_index = 0;
     out->buffer[0] = ctx->info.framebuffer;
     out->buffer[1] = NULL;
     return LVGL_AIC_OK;
