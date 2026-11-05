@@ -18,7 +18,8 @@ lvgl_aic_result_t lvgl_aic_display_port_init(
     lv_display_t **display, const lvgl_aic_display_backend_t *backend);
 void lvgl_aic_display_port_deinit(lv_display_t *display);
 void lvgl_aic_display_stats(uint32_t *flush_count, uint32_t *fps,
-                            uint32_t *errors);
+                            uint32_t *errors, uint32_t *flush_ms_last,
+                            uint32_t *flush_ms_max, uint32_t *flush_ms_avg);
 
 #ifdef __cplusplus
 }

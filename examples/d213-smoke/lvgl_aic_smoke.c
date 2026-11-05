@@ -17,6 +17,9 @@ static lv_obj_t *g_click_label;
 static lv_obj_t *g_drag_label;
 static lv_obj_t *g_status_label;
 static lv_obj_t *g_slider;
+static lv_obj_t *g_bench_obj;
+static lv_timer_t *g_bench_timer;
+static rt_int32_t g_bench_dir = 1;
 static rt_uint32_t g_click_count;
 
 static void demo_click_cb(lv_event_t *event)
@@ -54,6 +57,59 @@ static void demo_status_timer(lv_timer_t *timer)
                               stats.touch_pressed ? "pressed" : "released",
                               (unsigned)stats.flush_count,
                               (unsigned)stats.fps);
+    }
+}
+
+static void demo_bench_timer(lv_timer_t *timer)
+{
+    int32_t x;
+
+    (void)timer;
+    if (g_bench_obj == RT_NULL)
+        return;
+
+    x = lv_obj_get_x(g_bench_obj) + g_bench_dir * 10;
+    if (x > 860)
+    {
+        x = 860;
+        g_bench_dir = -1;
+    }
+    else if (x < 120)
+    {
+        x = 120;
+        g_bench_dir = 1;
+    }
+    lv_obj_set_x(g_bench_obj, x);
+}
+
+static void demo_bench_start(void *user_data)
+{
+    (void)user_data;
+
+    if (g_bench_obj == RT_NULL)
+    {
+        lv_obj_t *scr = lv_display_get_screen_active(lvgl_aic_get_display());
+
+        g_bench_obj = lv_obj_create(scr);
+        lv_obj_set_size(g_bench_obj, 48, 48);
+        lv_obj_set_pos(g_bench_obj, 120, 150);
+        lv_obj_set_style_radius(g_bench_obj, 24, 0);
+        lv_obj_set_style_bg_color(g_bench_obj, lv_color_hex(0xffb020), 0);
+        lv_obj_set_style_border_width(g_bench_obj, 0, 0);
+    }
+
+    if (g_bench_timer == RT_NULL)
+        g_bench_timer = lv_timer_create(demo_bench_timer, 16, RT_NULL);
+}
+
+static void demo_bench_stop(void *user_data)
+{
+    (void)user_data;
+
+    if (g_bench_timer != RT_NULL)
+    {
+        lv_timer_delete(g_bench_timer);
+        g_bench_timer = RT_NULL;
     }
 }
 
@@ -184,13 +240,55 @@ static void cmd_lvgl_demo(int argc, char **argv)
     if (argc > 1 && !rt_strcmp(argv[1], "status"))
     {
         lvgl_aic_get_stats(&stats);
-        rt_kprintf("lvgl: flush=%u fps=%u touch=%u/%u err=%u "
-                   "pos=%d,%d %s\n",
+        rt_kprintf("lvgl: flush=%u fps=%u flush_ms=%u/%u/%u "
+                   "touch=%u/%u err=%u pos=%d,%d %s\n",
                    (unsigned)stats.flush_count, (unsigned)stats.fps,
+                   (unsigned)stats.flush_ms_last,
+                   (unsigned)stats.flush_ms_avg,
+                   (unsigned)stats.flush_ms_max,
                    (unsigned)stats.touch_reads, (unsigned)stats.touch_events,
                    (unsigned)stats.touch_errors,
                    (int)stats.touch_x, (int)stats.touch_y,
                    stats.touch_pressed ? "pressed" : "released");
+        return;
+    }
+
+    if (argc > 1 && !rt_strcmp(argv[1], "bench"))
+    {
+        lvgl_aic_stats_t before;
+        lvgl_aic_stats_t after;
+        rt_uint32_t seconds = argc > 2 ?
+            (rt_uint32_t)strtoul(argv[2], RT_NULL, 0) : 5;
+        rt_tick_t start;
+        rt_tick_t elapsed;
+
+        if (seconds == 0 || seconds > 60)
+            seconds = 5;
+        if (demo_ensure_started() != LVGL_AIC_OK)
+        {
+            rt_kprintf("lvgl: start failed\n");
+            return;
+        }
+
+        lvgl_aic_get_stats(&before);
+        (void)lvgl_aic_async_call(demo_bench_start, RT_NULL);
+        rt_thread_mdelay(50);
+        start = rt_tick_get();
+        rt_thread_mdelay(seconds * RT_TICK_PER_SECOND);
+        elapsed = rt_tick_get() - start;
+        (void)lvgl_aic_async_call(demo_bench_stop, RT_NULL);
+        rt_thread_mdelay(50);
+        lvgl_aic_get_stats(&after);
+
+        rt_kprintf("lvgl bench: %u s, flushes=%u, fps~%u, "
+                   "flush_ms last/avg/max=%u/%u/%u\n",
+                   (unsigned)seconds,
+                   (unsigned)(after.flush_count - before.flush_count),
+                   elapsed ? (unsigned)((after.flush_count -
+                       before.flush_count) * RT_TICK_PER_SECOND / elapsed) : 0,
+                   (unsigned)after.flush_ms_last,
+                   (unsigned)after.flush_ms_avg,
+                   (unsigned)after.flush_ms_max);
         return;
     }
 

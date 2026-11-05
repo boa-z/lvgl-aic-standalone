@@ -41,6 +41,9 @@ typedef struct
 {
     uint32_t flush_count;
     uint32_t fps;
+    uint32_t flush_ms_last;
+    uint32_t flush_ms_max;
+    uint32_t flush_ms_avg;
     uint32_t touch_reads;
     uint32_t touch_events;
     uint32_t touch_errors;

@@ -309,7 +309,8 @@ void lvgl_aic_get_stats(lvgl_aic_stats_t *stats)
 
     memset(stats, 0, sizeof(*stats));
     lvgl_aic_display_stats(&stats->flush_count, &stats->fps,
-                           &stats->display_errors);
+                           &stats->display_errors, &stats->flush_ms_last,
+                           &stats->flush_ms_max, &stats->flush_ms_avg);
     stats->async_dropped = g_lvgl_aic.async_dropped;
 #ifdef LVGL_AIC_USE_TOUCH
     lvgl_aic_touch_stats(&stats->touch_reads, &stats->touch_events,

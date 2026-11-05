@@ -44,14 +44,17 @@ make test
 lvgl_demo
 lvgl_demo status
 lvgl_touch 10
+lvgl_demo bench 10
 lvgl_demo stop
 lvgl_demo deinit
 ```
 
 Record:
 
-- flush count and FPS;
+- flush count, FPS and flush last/avg/max time;
 - touch extent for TL/TR/BL/BR/centre;
+- presented FPS under `lvgl_demo bench` (static pages can show ~5 fps
+  because only the 200 ms status timer invalidates them);
 - display underflow/VSync counters;
 - heap and stack watermarks;
 - start/stop/deinit/restart repetitions.

@@ -90,12 +90,16 @@ If `LVGL_AIC_DEMO_SMOKE=y`:
 msh > lvgl_demo
 msh > lvgl_demo status
 msh > lvgl_touch 10
+msh > lvgl_demo bench 10
 msh > lvgl_demo stop
 msh > lvgl_demo deinit
 ```
 
 The page verifies display, click, drag and touch direction.  It uses only the
-public component API.
+public component API.  `status` reports last/average/maximum flush time.
+`bench` animates a small object and reports the presented-frame rate; a static
+page can legitimately show ~5 fps because only the 200 ms status timer
+invalidates it.
 
 ## Tests
 
@@ -108,7 +112,7 @@ make test
 
 - BUILD: PASS (D213 BSP + component, macOS GCC 16.1.0)
 - HOST: PASS (`tests/host`)
-- PACKAGE: PASS (`rtthread.bin` 587824, ITB 591872, IMG 1441280)
+- PACKAGE: PASS (`rtthread.bin` 589544, ITB 591872, IMG 1441280)
 - HW: PENDING for this standalone image (the earlier in-BSP port was HW
   validated; it is not transferred to the standalone component)
 

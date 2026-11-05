@@ -26,6 +26,9 @@ typedef struct
     uint32_t fps_frames;
     uint32_t fps_start;
     uint32_t errors;
+    uint32_t flush_ms_last;
+    uint32_t flush_ms_max;
+    uint64_t flush_ms_total;
 } display_port_t;
 
 static display_port_t g_display_port;
@@ -66,9 +69,13 @@ static void display_flush(lv_display_t *display, const lv_area_t *area,
                           uint8_t *px_map)
 {
     display_port_t *port = &g_display_port;
+    uint32_t start_ms;
+    uint32_t elapsed_ms;
     int32_t target;
 
     (void)area;
+
+    start_ms = display_tick_ms();
 
     if (!lv_display_flush_is_last(display))
     {
@@ -127,6 +134,11 @@ static void display_flush(lv_display_t *display, const lv_area_t *area,
 
     port->back_index = target;
     port->flush_count++;
+    elapsed_ms = (uint32_t)(display_tick_ms() - start_ms);
+    port->flush_ms_last = elapsed_ms;
+    if (elapsed_ms > port->flush_ms_max)
+        port->flush_ms_max = elapsed_ms;
+    port->flush_ms_total += elapsed_ms;
     display_fps_update();
     lv_display_flush_ready(display);
 }
@@ -224,12 +236,22 @@ void lvgl_aic_display_port_deinit(lv_display_t *display)
 }
 
 void lvgl_aic_display_stats(uint32_t *flush_count, uint32_t *fps,
-                            uint32_t *errors)
+                            uint32_t *errors, uint32_t *flush_ms_last,
+                            uint32_t *flush_ms_max, uint32_t *flush_ms_avg)
 {
+    display_port_t *port = &g_display_port;
+
     if (flush_count != NULL)
-        *flush_count = g_display_port.flush_count;
+        *flush_count = port->flush_count;
     if (fps != NULL)
-        *fps = g_display_port.fps;
+        *fps = port->fps;
     if (errors != NULL)
-        *errors = g_display_port.errors;
+        *errors = port->errors;
+    if (flush_ms_last != NULL)
+        *flush_ms_last = port->flush_ms_last;
+    if (flush_ms_max != NULL)
+        *flush_ms_max = port->flush_ms_max;
+    if (flush_ms_avg != NULL)
+        *flush_ms_avg = port->flush_count ?
+            (uint32_t)(port->flush_ms_total / port->flush_count) : 0;
 }
