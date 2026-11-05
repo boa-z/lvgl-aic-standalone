@@ -112,7 +112,7 @@ make test
 
 - BUILD: PASS (D213 BSP + component, macOS GCC 16.1.0)
 - HOST: PASS (`tests/host`)
-- PACKAGE: PASS (`rtthread.bin` 589544, ITB 591872, IMG 1441280)
+- PACKAGE: PASS (`rtthread.bin` 590688, ITB 593920, IMG 1443328)
 - HW: PENDING for this standalone image (the earlier in-BSP port was HW
   validated; it is not transferred to the standalone component)
 

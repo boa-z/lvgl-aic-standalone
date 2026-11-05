@@ -20,6 +20,7 @@ static lv_obj_t *g_slider;
 static lv_obj_t *g_bench_obj;
 static lv_timer_t *g_bench_timer;
 static rt_int32_t g_bench_dir = 1;
+static volatile rt_uint8_t g_bench_enabled;
 static rt_uint32_t g_click_count;
 
 static void demo_click_cb(lv_event_t *event)
@@ -65,8 +66,11 @@ static void demo_bench_timer(lv_timer_t *timer)
     int32_t x;
 
     (void)timer;
-    if (g_bench_obj == RT_NULL)
+    if (g_bench_obj == RT_NULL || !g_bench_enabled)
         return;
+
+    if (lv_obj_has_flag(g_bench_obj, LV_OBJ_FLAG_HIDDEN))
+        lv_obj_remove_flag(g_bench_obj, LV_OBJ_FLAG_HIDDEN);
 
     x = lv_obj_get_x(g_bench_obj) + g_bench_dir * 10;
     if (x > 860)
@@ -80,37 +84,6 @@ static void demo_bench_timer(lv_timer_t *timer)
         g_bench_dir = 1;
     }
     lv_obj_set_x(g_bench_obj, x);
-}
-
-static void demo_bench_start(void *user_data)
-{
-    (void)user_data;
-
-    if (g_bench_obj == RT_NULL)
-    {
-        lv_obj_t *scr = lv_display_get_screen_active(lvgl_aic_get_display());
-
-        g_bench_obj = lv_obj_create(scr);
-        lv_obj_set_size(g_bench_obj, 48, 48);
-        lv_obj_set_pos(g_bench_obj, 120, 150);
-        lv_obj_set_style_radius(g_bench_obj, 24, 0);
-        lv_obj_set_style_bg_color(g_bench_obj, lv_color_hex(0xffb020), 0);
-        lv_obj_set_style_border_width(g_bench_obj, 0, 0);
-    }
-
-    if (g_bench_timer == RT_NULL)
-        g_bench_timer = lv_timer_create(demo_bench_timer, 16, RT_NULL);
-}
-
-static void demo_bench_stop(void *user_data)
-{
-    (void)user_data;
-
-    if (g_bench_timer != RT_NULL)
-    {
-        lv_timer_delete(g_bench_timer);
-        g_bench_timer = RT_NULL;
-    }
 }
 
 static lv_obj_t *demo_hint(lv_obj_t *parent, const char *text,
@@ -199,6 +172,15 @@ static void demo_create_ui(lv_display_t *display)
     lv_obj_set_style_text_color(g_status_label, lv_color_hex(0xa9d0ff), 0);
     lv_obj_align(g_status_label, LV_ALIGN_BOTTOM_MID, 0, -12);
 
+    g_bench_obj = lv_obj_create(scr);
+    lv_obj_set_size(g_bench_obj, 48, 48);
+    lv_obj_set_pos(g_bench_obj, 120, 150);
+    lv_obj_set_style_radius(g_bench_obj, 24, 0);
+    lv_obj_set_style_bg_color(g_bench_obj, lv_color_hex(0xffb020), 0);
+    lv_obj_set_style_border_width(g_bench_obj, 0, 0);
+    lv_obj_add_flag(g_bench_obj, LV_OBJ_FLAG_HIDDEN);
+
+    g_bench_timer = lv_timer_create(demo_bench_timer, 16, RT_NULL);
     lv_timer_create(demo_status_timer, 200, RT_NULL);
 }
 
@@ -271,12 +253,12 @@ static void cmd_lvgl_demo(int argc, char **argv)
         }
 
         lvgl_aic_get_stats(&before);
-        (void)lvgl_aic_async_call(demo_bench_start, RT_NULL);
+        g_bench_enabled = 1;
         rt_thread_mdelay(50);
         start = rt_tick_get();
         rt_thread_mdelay(seconds * RT_TICK_PER_SECOND);
         elapsed = rt_tick_get() - start;
-        (void)lvgl_aic_async_call(demo_bench_stop, RT_NULL);
+        g_bench_enabled = 0;
         rt_thread_mdelay(50);
         lvgl_aic_get_stats(&after);
 
