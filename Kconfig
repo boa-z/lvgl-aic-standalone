@@ -1,0 +1,58 @@
+menu "LVGL AIC standalone"
+
+config LVGL_AIC_USE_D21X_BACKEND
+    bool "Use ArtInChip D21x display backend"
+    default y
+    help
+        Uses the BSP public drv_disp/GE interfaces for double buffering,
+        PAN/VSync and optional GE frame copy.  Disable to use the generic
+        RT-Thread Graphic Device backend.
+
+if LVGL_AIC_USE_D21X_BACKEND
+config LVGL_AIC_USE_GE_COPY
+    bool "Use GE Normal bitblt for the LVGL frame copy"
+    default n
+    help
+        Software copy is the validated baseline.  Enable only after the
+        display path has been verified.
+endif
+
+config LVGL_AIC_USE_TOUCH
+    bool "Use an RT-Thread touch device as LVGL pointer input"
+    default y
+
+if LVGL_AIC_USE_TOUCH
+config LVGL_AIC_TOUCH_DEVICE
+    string "Touch device name"
+    default "gt911"
+
+config LVGL_AIC_TOUCH_SWAP_XY
+    bool "Swap touch X/Y axes"
+    default n
+
+config LVGL_AIC_TOUCH_X_FLIP
+    bool "Flip touch X axis"
+    default n
+
+config LVGL_AIC_TOUCH_Y_FLIP
+    bool "Flip touch Y axis"
+    default n
+endif
+
+config LVGL_AIC_DEMO_SMOKE
+    bool "Build the D213 smoke demo"
+    default y
+
+config LVGL_AIC_UI_STACK_SIZE
+    int "LVGL UI thread stack size"
+    default 32768
+
+config LVGL_AIC_UI_PRIORITY
+    int "LVGL UI thread priority"
+    default 15
+
+config LVGL_AIC_UI_PERIOD_MS
+    int "LVGL UI loop period (ms)"
+    default 10
+
+endmenu

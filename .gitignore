@@ -1,0 +1,6 @@
+build/
+*.o
+*.a
+*.so
+*.dylib
+tests/host/test_core
